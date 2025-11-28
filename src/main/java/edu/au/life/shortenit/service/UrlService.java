@@ -26,7 +26,7 @@ public class UrlService {
     private String baseUrl;
 
     private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    private static final int SHORT_CODE_LENGTH = 7;
+    private static final int SHORT_CODE_LENGTH = 8;
     private static final SecureRandom random = new SecureRandom();
 
     @Transactional
