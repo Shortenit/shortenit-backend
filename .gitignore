@@ -31,3 +31,12 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Application properties (contains sensitive data)
+src/main/resources/application.properties
+src/main/resources/application-*.properties

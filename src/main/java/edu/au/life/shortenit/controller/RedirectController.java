@@ -12,7 +12,7 @@ import org.springframework.web.servlet.view.RedirectView;
 public class RedirectController {
 
     private final UrlService urlService;
-    
+
     @GetMapping("/{shortCode}")
     public RedirectView redirect(@PathVariable String shortCode) {
         String originalUrl = urlService.getOriginalUrl(shortCode);
