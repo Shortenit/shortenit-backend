@@ -17,7 +17,9 @@ public class RedirectController {
     public RedirectView redirect(@PathVariable String shortCode) {
         String originalUrl = urlService.getOriginalUrl(shortCode);
         RedirectView redirectView = new RedirectView();
-        redirectView.setUrl(originalUrl);
+        redirectView.setUrl(originalUrl); // tells Spring where to redirect the browser
         return redirectView;
     }
 }
+
+// When user visit to sample URL, returns a RedirectView object that Spring MVC converts to an HTTP redirect

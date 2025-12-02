@@ -17,5 +17,5 @@ public class UrlShortenRequest {
 
     private String customAlias;
 
-    private Integer expirationDays; // Optional: number of days until expiration
+    private Integer expirationDays;
 }
