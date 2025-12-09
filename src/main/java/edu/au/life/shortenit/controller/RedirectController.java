@@ -1,6 +1,7 @@
 package edu.au.life.shortenit.controller;
 
 import edu.au.life.shortenit.service.UrlService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,9 +14,13 @@ public class RedirectController {
 
     private final UrlService urlService;
 
+    /**
+     * Redirect to original URL and track analytics
+     * GET /{shortCode}
+     */
     @GetMapping("/{shortCode}")
-    public RedirectView redirect(@PathVariable String shortCode) {
-        String originalUrl = urlService.getOriginalUrl(shortCode);
+    public RedirectView redirect(@PathVariable String shortCode, HttpServletRequest request) {
+        String originalUrl = urlService.getOriginalUrl(shortCode, request);
         RedirectView redirectView = new RedirectView();
         redirectView.setUrl(originalUrl); // tells Spring where to redirect the browser
         return redirectView;

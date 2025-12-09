@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "urls")
@@ -38,6 +40,9 @@ public class Url {
 
     @Column
     private Boolean isActive = true;
+
+    @OneToMany(mappedBy = "url", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UrlClick> clicks = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
