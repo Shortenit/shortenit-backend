@@ -17,8 +17,21 @@ public class UrlResponse {
     private String originalUrl;
     private String shortCode;
     private String shortUrl;
+
+    private String title;
+    private String customAlias;
+    private Long clickCount;
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;
-    private Long clickCount;
-    private String customAlias;
+    private UserInfo owner;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UserInfo {
+        private Long id;
+        private String name;
+        private String email;
+    } // owner info
 }
