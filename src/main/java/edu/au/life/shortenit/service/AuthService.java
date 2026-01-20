@@ -3,11 +3,8 @@ package edu.au.life.shortenit.service;
 import edu.au.life.shortenit.dto.LoginResponse;
 import edu.au.life.shortenit.entity.RefreshToken;
 import edu.au.life.shortenit.entity.User;
-import edu.au.life.shortenit.exception.InvalidTokenException;
 import edu.au.life.shortenit.repository.RefreshTokenRepository;
 import edu.au.life.shortenit.repository.UserRepository;
-import lombok.extern.java.Log;
-import org.hibernate.tool.schema.internal.IndividuallySchemaValidatorImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-import java.util.logging.LogRecord;
 
 @Service
 public class AuthService {

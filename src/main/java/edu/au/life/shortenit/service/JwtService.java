@@ -52,6 +52,13 @@ public class JwtService {
                 .compact();
     }
 
+    /**
+     * Get access token expiration time in milliseconds
+     */
+    public Long getAccessTokenExpiration() {
+        return accessTokenExpiration;
+    }
+
     public String extractEmail(String token) {
         return extractAllClaims(token).getSubject();
     }

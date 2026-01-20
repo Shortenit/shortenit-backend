@@ -32,4 +32,8 @@ public interface ApiKeyRepository extends JpaRepository<ApiKey, Long> {
     @Modifying
     @Query("DELETE FROM ApiKey k WHERE k.expiresAt < :now")
     void deleteExpired(@Param("now") LocalDateTime now);
+
+    @Query("SELECT k FROM ApiKey k JOIN FETCH k.user")
+    List<ApiKey> findAllWithUser();
+
 }

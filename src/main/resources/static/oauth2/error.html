@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Error - Shortenit</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .error-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #c53030;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .error-message {
+            color: #2d3748;
+            margin-bottom: 30px;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+
+        .info-box {
+            background: #fff5f5;
+            border: 2px solid #fc8181;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .info-box h3 {
+            color: #c53030;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .info-box p {
+            color: #742a2a;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .info-box code {
+            background: #fed7d7;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="error-icon">🚫</div>
+    <h1>Access Denied</h1>
+    <p class="error-message" id="errorMessage">
+        Only Assumption University (@au.edu) email addresses are allowed to use this service.
+    </p>
+
+    <div class="info-box">
+        <h3>📧 Email Requirements:</h3>
+        <p>
+            To access Shortenit, you must login with your Assumption University Microsoft account.
+            <br><br>
+            <strong>Example:</strong> <code>yourname@au.edu</code>
+        </p>
+    </div>
+
+    <div class="info-box">
+        <h3>💡 What to do:</h3>
+        <p>
+            1. Make sure you're using your university email<br>
+            2. Click the button below to try again<br>
+            3. Select your <code>@au.edu</code> account when prompted
+        </p>
+    </div>
+
+    <a href="/oauth2/authorization/microsoft" class="btn">🔄 Try Again with University Email</a>
+</div>
+
+<script>
+    // Get error details from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+    const message = urlParams.get('message');
+
+    if (message) {
+        document.getElementById('errorMessage').textContent = message;
+    }
+</script>
+</body>
+</html>
