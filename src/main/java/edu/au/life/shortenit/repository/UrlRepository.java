@@ -5,6 +5,7 @@ import edu.au.life.shortenit.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -48,4 +49,8 @@ public interface UrlRepository extends JpaRepository<Url, Long> {
 
     @Query("SELECT COUNT(u) FROM Url u WHERE u.user = :user AND u.isActive = true")
     long countActiveUrlsByUser(@Param("user") User user);
+
+    @Modifying
+    @Query("UPDATE Url u SET u.clickCount = u.clickCount + 1 WHERE u.id = :urlId")
+    void incrementClickCount(@Param("urlId") Long urlId);
 }

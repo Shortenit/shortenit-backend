@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 
+import edu.au.life.shortenit.exception.InvalidTokenException;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -88,16 +90,16 @@ public class AuthService {
     @Transactional
     public LoginResponse refreshAccessToken(String refreshTokenString) {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenString)
-                .orElseThrow(() -> new RuntimeException("Inviald Refresh Token."));
+                .orElseThrow(() -> new InvalidTokenException("Invalid refresh token."));
 
         if (refreshToken.isExpired()) {
             refreshTokenRepository.delete(refreshToken);
-            throw new RuntimeException("Refresh Token Expired.");
+            throw new InvalidTokenException("Refresh token expired.");
         }
 
         User user = refreshToken.getUser();
 
-        // Genereate new access Token
+        // Generate new access token
         String accessToken = jwtService.generateAccessToken(
                 user.getId(),
                 user.getEmail(),
@@ -112,6 +114,7 @@ public class AuthService {
                 .user(LoginResponse.UserInfo.builder()
                         .id(user.getId())
                         .email(user.getEmail())
+                        .name(user.getName())
                         .role(user.getRole().name()).build()).build();
     }
 

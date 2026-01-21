@@ -3,6 +3,7 @@ package edu.au.life.shortenit.service;
 import edu.au.life.shortenit.dto.GeoLocation;
 import edu.au.life.shortenit.dto.UrlResponse;
 import edu.au.life.shortenit.dto.UrlShortenRequest;
+import edu.au.life.shortenit.dto.UrlUpdateRequest;
 import edu.au.life.shortenit.dto.UrlWithAnalyticsResponse;
 import edu.au.life.shortenit.exception.CustomAliasAlreadyExistsException;
 import edu.au.life.shortenit.exception.UrlNotFoundException;
@@ -86,8 +87,8 @@ public class UrlService {
 
         trackClick(url, request);
 
-        url.setClickCount(url.getClickCount() + 1);
-        urlRepository.save(url);
+        // Use atomic increment to prevent race conditions
+        urlRepository.incrementClickCount(url.getId());
 
         return url.getOriginalUrl();
     }
@@ -171,6 +172,30 @@ public class UrlService {
         }
 
         urlRepository.delete(url);
+    }
+
+    @Transactional
+    public UrlResponse updateUrl(String shortCode, UrlUpdateRequest request, User user) {
+        Url url = urlRepository.findByShortCode(shortCode)
+                .orElseThrow(() -> new UrlNotFoundException("Short URL not found: " + shortCode));
+
+        if (!url.getUser().getId().equals(user.getId()) &&
+                !user.getRole().equals(User.Role.ADMIN)) {
+            throw new UrlNotFoundException("Short URL not found: " + shortCode);
+        }
+
+        if (request.getTitle() != null) {
+            url.setTitle(request.getTitle());
+        }
+
+        if (Boolean.TRUE.equals(request.getClearExpiration())) {
+            url.setExpiresAt(null);
+        } else if (request.getExpirationDays() != null && request.getExpirationDays() > 0) {
+            url.setExpiresAt(LocalDateTime.now().plusDays(request.getExpirationDays()));
+        }
+
+        Url savedUrl = urlRepository.save(url);
+        return convertToResponse(savedUrl);
     }
 
     private String generateUniqueShortCode() {

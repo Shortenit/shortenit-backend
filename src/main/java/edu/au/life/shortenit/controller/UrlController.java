@@ -2,12 +2,13 @@ package edu.au.life.shortenit.controller;
 
 import edu.au.life.shortenit.dto.UrlResponse;
 import edu.au.life.shortenit.dto.UrlShortenRequest;
+import edu.au.life.shortenit.dto.UrlUpdateRequest;
 import edu.au.life.shortenit.dto.UrlWithAnalyticsResponse;
 import edu.au.life.shortenit.entity.User;
 import edu.au.life.shortenit.service.UrlService;
 import edu.au.life.shortenit.util.SecurityUtils;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,15 +21,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/urls")
+@RequiredArgsConstructor
 public class UrlController {
 
-    @Autowired
-    private UrlService urlService;
+    private final UrlService urlService;
 
-    /**
-     * Create short URL - REQUIRES AUTHENTICATION
-     * PHASE 3: UPDATED - Get current user, pass to service
-     */
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UrlResponse> createShortUrl(@Valid @RequestBody UrlShortenRequest request) {
@@ -72,10 +69,16 @@ public class UrlController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Delete URL - REQUIRES AUTHENTICATION
-     * PHASE 3: UPDATED - Check ownership
-     */
+    @PutMapping("/{code}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UrlResponse> updateUrl(
+            @PathVariable String code,
+            @Valid @RequestBody UrlUpdateRequest request) {
+        User currentUser = SecurityUtils.getCurrentUser();
+        UrlResponse response = urlService.updateUrl(code, request, currentUser);
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/{code}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deleteUrl(@PathVariable String code) {

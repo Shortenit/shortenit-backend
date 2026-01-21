@@ -7,8 +7,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.lang.reflect.InaccessibleObjectException;
-import java.rmi.UnexpectedException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,14 +56,14 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @ExceptionHandler(UnexpectedException.class)
+    @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException ex) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.UNAUTHORIZED.value(),
                 ex.getMessage(),
                 LocalDateTime.now()
         );
-        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(ForbiddenException.class)
