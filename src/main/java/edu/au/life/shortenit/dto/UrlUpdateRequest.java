@@ -18,4 +18,11 @@ public class UrlUpdateRequest {
     private Integer expirationDays;
 
     private Boolean clearExpiration;
+
+    @Size(min = 1, max = 50, message = "Code must be between 1 and 50 characters")
+    @jakarta.validation.constraints.Pattern(
+            regexp = "^[a-zA-Z0-9-]*$",
+            message = "Code can only contain letters, numbers, and hyphens"
+    )
+    private String code;
 }

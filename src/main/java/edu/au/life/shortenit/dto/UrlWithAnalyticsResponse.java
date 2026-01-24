@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UrlWithAnalyticsResponse {
-    private String shortCode;
+    private String code;
     private String originalUrl;
     private String customAlias;
     private Long clickCount;

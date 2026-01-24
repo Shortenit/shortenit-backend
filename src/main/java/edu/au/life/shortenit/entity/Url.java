@@ -19,6 +19,8 @@ import java.util.List;
 @AllArgsConstructor
 public class Url {
 
+    public enum CodeType {AUTO, CUSTOM};
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -30,8 +32,12 @@ public class Url {
     @Column(nullable = false, length = 2048)
     private String originalUrl;
 
-    @Column(nullable = false, unique = true, length = 10)
-    private String shortCode;
+    @Column(nullable = false, unique = true, length = 50)
+    private String code;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private CodeType codeType = CodeType.AUTO;
 
     @Column(nullable = false, length = 200)
     private String title;
@@ -45,8 +51,6 @@ public class Url {
     @Column(nullable = false)
     private Long clickCount = 0L;
 
-    @Column
-    private String customAlias;
 
     @Column
     private Boolean isActive = true;

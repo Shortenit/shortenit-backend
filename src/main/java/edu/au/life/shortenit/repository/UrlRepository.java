@@ -16,13 +16,9 @@ import java.util.Optional;
 @Repository
 public interface UrlRepository extends JpaRepository<Url, Long> {
 
-    Optional<Url> findByShortCode(String shortCode);
+    Optional<Url> findByCode(String code);
 
-    Optional<Url> findByCustomAlias(String customAlias);
-
-    boolean existsByShortCode(String shortCode);
-
-    boolean existsByCustomAlias(String customAlias);
+    boolean existsByCode(String code);
 
     Page<Url> findAll(Pageable pageable);
 

@@ -15,7 +15,7 @@ import java.util.Map;
 public interface UrlClickRepository extends JpaRepository<UrlClick, Long> {
     List<UrlClick> findByUrl(Url url);
     List<UrlClick> findByUrlOrderByClickedAtDesc(Url url);
-    List<UrlClick> findByUrlShortCode(String shortCode);
+    List<UrlClick> findByUrlCode(String code);
 
     @Query("SELECT COUNT(c) FROM UrlClick c WHERE c.url.id = :urlId")
     int countByUrlId(@Param("urlId") Long urlId);

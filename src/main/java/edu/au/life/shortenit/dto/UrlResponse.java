@@ -15,11 +15,10 @@ public class UrlResponse {
 
     private Long id;
     private String originalUrl;
-    private String shortCode;
+    private String code;
     private String shortUrl;
 
     private String title;
-    private String customAlias;
     private Long clickCount;
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;

@@ -21,12 +21,9 @@ public class UrlShortenRequest {
     @Size(min = 1, max = 200, message = "Title must be between 1 and 200 characters")
     private String title;
 
-    @Size(min = 1, max = 50, message = "Custom alias must be between 1 and 50 characters")
-    @Pattern(
-            regexp = "^[a-zA-Z0-9-]*$",
-            message = "Custom alias can only contain letters, numbers, and hyphens"
-    )
-    private String customAlias;
+    @Size(min = 1, max = 50, message = "Code must be between 1 and 50 characters")
+    @Pattern(regexp = "^[a-zA-Z0-9-]*$", message = "Code can only contain letters, numbers, and hyphens")
+    private String code;
 
     @Min(value = 1, message = "Expiration days must be at least 1")
     private Integer expirationDays;
