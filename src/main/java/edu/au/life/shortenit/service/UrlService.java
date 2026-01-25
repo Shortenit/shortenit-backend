@@ -42,7 +42,7 @@ public class UrlService {
     private String baseUrl;
 
     private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    private static final int SHORT_CODE_LENGTH = 7;
+    private static final int SHORT_CODE_LENGTH = 8;
     private static final SecureRandom random = new SecureRandom();
 
     @Transactional
@@ -176,9 +176,16 @@ public class UrlService {
         Url url = urlRepository.findByCode(code)
                 .orElseThrow(() -> new UrlNotFoundException("Short URL not found: " + code));
 
-        // auth check same
+        if (!url.getUser().getId().equals(user.getId()) &&
+                !user.getRole().equals(User.Role.ADMIN)) {
+            throw new UrlNotFoundException("Short URL not found: " + code);
+        }
 
         if (request.getTitle() != null) url.setTitle(request.getTitle());
+
+        if (request.getIsActive() != null) {
+            url.setIsActive(request.getIsActive());
+        }
 
         if (request.getCode() != null && !request.getCode().isBlank()) {
             String newCode = request.getCode();
@@ -226,6 +233,8 @@ public class UrlService {
                 .createdAt(url.getCreatedAt())
                 .expiresAt(url.getExpiresAt())
                 .clickCount(url.getClickCount())
+                .isActive(url.getIsActive())
+                .codeType(url.getCodeType().name())
                 .owner(UrlResponse.UserInfo.builder()
                         .id(url.getUser().getId())
                         .name(url.getUser().getName())
@@ -250,16 +259,12 @@ public class UrlService {
                     .createdAt(url.getCreatedAt())
                     .expiresAt(url.getExpiresAt())
                     .isExpired(url.getExpiresAt() != null && url.getExpiresAt().isBefore(LocalDateTime.now()))
+                    .isActive(url.getIsActive())
                     .ownerName(url.getUser().getName())
                     .ownerEmail(url.getUser().getEmail())
                     .analyticsSummary(summary)
                     .build();
         });
-    }
-
-    @Transactional(readOnly = true)
-    public Page<UrlWithAnalyticsResponse> getRecentUrlsWithAnalytics(User user, Pageable pageable) {
-        return getAllUrlsWithAnalytics(user, pageable);
     }
 
     private UrlWithAnalyticsResponse.AnalyticsSummary getAnalyticsSummary(Url url) {

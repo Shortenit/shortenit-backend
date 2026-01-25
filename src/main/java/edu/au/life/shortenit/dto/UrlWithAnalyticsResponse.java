@@ -19,6 +19,7 @@ public class UrlWithAnalyticsResponse {
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;
     private Boolean isExpired;
+    private Boolean isActive;
     private AnalyticsSummary analyticsSummary;
     private String title;
     private String ownerName;

@@ -25,4 +25,6 @@ public class UrlUpdateRequest {
             message = "Code can only contain letters, numbers, and hyphens"
     )
     private String code;
+
+    private Boolean isActive;
 }

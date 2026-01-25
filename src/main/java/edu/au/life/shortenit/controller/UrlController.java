@@ -83,7 +83,7 @@ public class UrlController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deleteUrl(@PathVariable String code) {
         User currentUser = SecurityUtils.getCurrentUser();
-        urlService.deleteUrl(code, currentUser);  // PHASE 3: UPDATED
-        return ResponseEntity.ok().build();
+        urlService.deleteUrl(code, currentUser);
+        return ResponseEntity.noContent().build();
     }
 }

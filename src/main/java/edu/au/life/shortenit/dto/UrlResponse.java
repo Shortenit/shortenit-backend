@@ -22,6 +22,8 @@ public class UrlResponse {
     private Long clickCount;
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;
+    private Boolean isActive;
+    private String codeType;
     private UserInfo owner;
 
     @Data
