@@ -45,3 +45,5 @@ src/main/resources/application-*.properties
 src/main/resources/geoip/*.mmdb
 
 .env
+
+.DS_Store
