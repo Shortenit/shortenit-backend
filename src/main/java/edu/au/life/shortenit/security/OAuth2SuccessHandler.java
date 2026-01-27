@@ -75,8 +75,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         if (email == null || !email.endsWith("@" + allowedEmailDomain)) {
             log.warn("OAuth2 login rejected: email domain not allowed. Required: @{}, Got: {}", allowedEmailDomain, email);
 
-            // Redirect to error page with message
-            String errorUrl = UriComponentsBuilder.fromUriString(baseUrl + "/oauth2/error.html")
+            // Redirect to frontend error page
+            String errorUrl = UriComponentsBuilder.fromUriString(baseUrl + "/auth/error")  // ✅ CHANGED
                     .queryParam("error", "invalid_email_domain")
                     .queryParam("message", "Only " + allowedEmailDomain + " emails are allowed")
                     .build()
@@ -115,8 +115,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         log.info("OAuth2 login successful for user ID: {}, role: {}", user.getId(), user.getRole());
 
-        // Build redirect URL with tokens
-        String targetUrl = UriComponentsBuilder.fromUriString(baseUrl + "/oauth2/success.html")
+        // Build redirect URL with tokens - REDIRECT TO FRONTEND
+        String targetUrl = UriComponentsBuilder.fromUriString(baseUrl + "/auth/callback")
                 .queryParam("accessToken", accessToken)
                 .queryParam("refreshToken", refreshToken.getToken())
                 .queryParam("user", user.getEmail())
