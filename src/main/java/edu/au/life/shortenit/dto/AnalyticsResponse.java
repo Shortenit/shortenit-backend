@@ -15,7 +15,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class AnalyticsResponse {
 
-    private String shortCode;
+    private String code;
     private String originalUrl;
     private Long totalClicks;
     private LocalDateTime createdAt;

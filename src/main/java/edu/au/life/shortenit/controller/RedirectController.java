@@ -14,17 +14,12 @@ public class RedirectController {
 
     private final UrlService urlService;
 
-    /**
-     * Redirect to original URL and track analytics
-     * GET /{shortCode}
-     */
-    @GetMapping("/s/{shortCode}")
-    public RedirectView redirect(@PathVariable String shortCode, HttpServletRequest request) {
-        String originalUrl = urlService.getOriginalUrl(shortCode, request);
-        RedirectView redirectView = new RedirectView();
-        redirectView.setUrl(originalUrl); // tells Spring where to redirect the browser
-        return redirectView;
+    @GetMapping("/s/{code}")
+    public RedirectView redirect(@PathVariable String code, HttpServletRequest request) {
+        String originalUrl = urlService.getOriginalUrl(code, request);
+        return new RedirectView(originalUrl);
     }
+
 }
 
 // When user visit to sample URL, returns a RedirectView object that Spring MVC converts to an HTTP redirect

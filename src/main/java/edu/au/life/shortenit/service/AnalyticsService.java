@@ -3,6 +3,7 @@ package edu.au.life.shortenit.service;
 import edu.au.life.shortenit.dto.AnalyticsResponse;
 import edu.au.life.shortenit.entity.Url;
 import edu.au.life.shortenit.entity.UrlClick;
+import edu.au.life.shortenit.entity.User;
 import edu.au.life.shortenit.exception.UrlNotFoundException;
 import edu.au.life.shortenit.repository.UrlClickRepository;
 import edu.au.life.shortenit.repository.UrlRepository;
@@ -21,14 +22,19 @@ public class AnalyticsService {
     private final UrlRepository urlRepository;
     private final UrlClickRepository urlClickRepository;
 
-    public AnalyticsResponse getAnalytics(String shortCode) {
-        Url url = urlRepository.findByShortCode(shortCode)
-                .orElseThrow(() -> new UrlNotFoundException("Short Url not found " + shortCode));
+    public AnalyticsResponse getAnalytics(String code, User user) {
+        Url url = urlRepository.findByCode(code)
+                .orElseThrow(() -> new UrlNotFoundException("Short URL not found: " + code));
+
+        if (!url.getUser().getId().equals(user.getId()) &&
+                !user.getRole().equals(User.Role.ADMIN)) {
+            throw new UrlNotFoundException("Short URL not found: " + code);
+        }
 
         List<UrlClick> clicks = urlClickRepository.findByUrlOrderByClickedAtDesc(url);
 
         return AnalyticsResponse.builder()
-                .shortCode(url.getShortCode())
+                .code(url.getCode())
                 .originalUrl(url.getOriginalUrl())
                 .totalClicks(url.getClickCount())
                 .createdAt(url.getCreatedAt())
@@ -42,6 +48,7 @@ public class AnalyticsService {
                 .recentClicks(getRecentClicks(clicks, 10))
                 .build();
     }
+
 
     private Map<String, Long> getClicksByDate(List<UrlClick> clicks) {
         return clicks.stream()
@@ -200,9 +207,15 @@ public class AnalyticsService {
                 .collect(Collectors.toList());
     }
 
-    public AnalyticsResponse getAnalyticsByDateRange(String shortCode, LocalDateTime start, LocalDateTime end) {
-        Url url = urlRepository.findByShortCode(shortCode)
-                .orElseThrow(() -> new UrlNotFoundException("Short Url not found " + shortCode));
+    public AnalyticsResponse getAnalyticsByDateRange(String code, LocalDateTime start, LocalDateTime end, User user) {
+        Url url = urlRepository.findByCode(code)
+                .orElseThrow(() -> new UrlNotFoundException("Short URL not found: " + code));
+
+        // Authorization check - user must own the URL or be admin
+        if (!url.getUser().getId().equals(user.getId()) &&
+                !user.getRole().equals(User.Role.ADMIN)) {
+            throw new UrlNotFoundException("Short URL not found: " + code);
+        }
 
         List<UrlClick> allClicks = urlClickRepository.findByUrlOrderByClickedAtDesc(url);
         List<UrlClick> filteredClicks = allClicks.stream()
@@ -210,7 +223,7 @@ public class AnalyticsService {
                 .collect(Collectors.toList());
 
         return AnalyticsResponse.builder()
-                .shortCode(url.getShortCode())
+                .code(url.getCode())
                 .originalUrl(url.getOriginalUrl())
                 .totalClicks((long) filteredClicks.size())
                 .createdAt(url.getCreatedAt())

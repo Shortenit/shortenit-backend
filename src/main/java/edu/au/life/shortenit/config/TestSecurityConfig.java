@@ -1,0 +1,30 @@
+package edu.au.life.shortenit.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+
+/**
+ * TestSecurityConfig - For Testing Only
+ * Disables security so tests can run without authentication
+ * Only active when spring.profiles.active=test
+ */
+@Configuration
+@EnableWebSecurity
+@Profile("test")
+public class TestSecurityConfig {
+
+    @Bean
+    public SecurityFilterChain testSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().permitAll()
+                );
+
+        return http.build();
+    }
+}

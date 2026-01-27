@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth2 Login Success</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .success-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .token-box {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .token-label {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .token-value {
+            background: white;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            word-break: break-all;
+            color: #4a5568;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .copy-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            margin-top: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .copy-btn:active {
+            transform: translateY(0);
+        }
+
+        .instructions {
+            background: #fff5f5;
+            border-left: 4px solid #f56565;
+            padding: 16px;
+            margin-top: 30px;
+            border-radius: 4px;
+        }
+
+        .instructions h3 {
+            color: #c53030;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .instructions p {
+            color: #742a2a;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .instructions code {
+            background: #fed7d7;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .postman-example {
+            background: #f0fff4;
+            border-left: 4px solid #48bb78;
+            padding: 16px;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+
+        .postman-example h3 {
+            color: #22543d;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .postman-example pre {
+            background: white;
+            border: 1px solid #c6f6d5;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="success-icon">🎉</div>
+    <h1>OAuth2 Login Successful!</h1>
+    <p class="subtitle">Your JWT tokens have been generated. Use these tokens to authenticate API requests.</p>
+
+    <div class="token-box">
+        <div class="token-label">Access Token (JWT)</div>
+        <div class="token-value" id="accessToken">Loading...</div>
+        <button class="copy-btn" onclick="copyToken('accessToken')">📋 Copy Access Token</button>
+    </div>
+
+    <div class="token-box">
+        <div class="token-label">Refresh Token</div>
+        <div class="token-value" id="refreshToken">Loading...</div>
+        <button class="copy-btn" onclick="copyToken('refreshToken')">📋 Copy Refresh Token</button>
+    </div>
+
+    <div class="instructions">
+        <h3>⚠️ Important: Save These Tokens!</h3>
+        <p>
+            These tokens will only be shown once. Copy them now and store them securely.
+            Use the <code>Access Token</code> in the <code>Authorization: Bearer {token}</code> header for API requests.
+        </p>
+    </div>
+
+    <div class="postman-example">
+        <h3>📮 How to Use in Postman:</h3>
+        <pre>POST http://localhost:8080/api/urls
+Headers:
+  Authorization: Bearer {YOUR_ACCESS_TOKEN}
+  Content-Type: application/json
+Body:
+  {
+    "title": "My URL",
+    "originalUrl": "https://example.com"
+  }</pre>
+    </div>
+</div>
+
+<script>
+    // Extract tokens from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const accessToken = urlParams.get('accessToken');
+    const refreshToken = urlParams.get('refreshToken');
+
+    if (accessToken) {
+        document.getElementById('accessToken').textContent = accessToken;
+    } else {
+        document.getElementById('accessToken').textContent = 'No access token found';
+    }
+
+    if (refreshToken) {
+        document.getElementById('refreshToken').textContent = refreshToken;
+    } else {
+        document.getElementById('refreshToken').textContent = 'No refresh token found';
+    }
+
+    function copyToken(elementId) {
+        const tokenElement = document.getElementById(elementId);
+        const token = tokenElement.textContent;
+
+        navigator.clipboard.writeText(token).then(() => {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '✅ Copied!';
+            btn.style.background = '#48bb78';
+
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.background = '#667eea';
+            }, 2000);
+        }).catch(err => {
+            alert('Failed to copy token. Please copy manually.');
+        });
+    }
+</script>
+</body>
+</html>

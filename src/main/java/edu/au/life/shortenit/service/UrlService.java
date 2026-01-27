@@ -3,11 +3,13 @@ package edu.au.life.shortenit.service;
 import edu.au.life.shortenit.dto.GeoLocation;
 import edu.au.life.shortenit.dto.UrlResponse;
 import edu.au.life.shortenit.dto.UrlShortenRequest;
+import edu.au.life.shortenit.dto.UrlUpdateRequest;
 import edu.au.life.shortenit.dto.UrlWithAnalyticsResponse;
 import edu.au.life.shortenit.exception.CustomAliasAlreadyExistsException;
 import edu.au.life.shortenit.exception.UrlNotFoundException;
 import edu.au.life.shortenit.entity.Url;
 import edu.au.life.shortenit.entity.UrlClick;
+import edu.au.life.shortenit.entity.User;
 import edu.au.life.shortenit.repository.UrlClickRepository;
 import edu.au.life.shortenit.repository.UrlRepository;
 import edu.au.life.shortenit.util.UserAgentParser;
@@ -40,78 +42,68 @@ public class UrlService {
     private String baseUrl;
 
     private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    private static final int SHORT_CODE_LENGTH = 7;
+    private static final int SHORT_CODE_LENGTH = 8;
     private static final SecureRandom random = new SecureRandom();
 
     @Transactional
-    public UrlResponse shortenUrl(UrlShortenRequest request) {
+    public UrlResponse shortenUrl(UrlShortenRequest request, User user) {
         Url url = new Url();
         url.setOriginalUrl(request.getOriginalUrl());
+        url.setTitle(request.getTitle());
+        url.setUser(user);
 
-        // Handle custom alias
-        if (request.getCustomAlias() != null && !request.getCustomAlias().isEmpty()) {
-            if (urlRepository.existsByCustomAlias(request.getCustomAlias())) {
-                throw new CustomAliasAlreadyExistsException("Custom alias already exists: " + request.getCustomAlias());
+        if (request.getCode() != null && !request.getCode().isBlank()) {
+            String code = request.getCode();
+
+            if (urlRepository.existsByCode(code)) {
+                throw new CustomAliasAlreadyExistsException("Code already exists: " + code);
             }
-            url.setCustomAlias(request.getCustomAlias());
-            url.setShortCode(request.getCustomAlias());
+
+            url.setCode(code);
+            url.setCodeType(Url.CodeType.CUSTOM);
         } else {
-            url.setShortCode(generateUniqueShortCode());
+            url.setCode(generateUniqueCode());
+            url.setCodeType(Url.CodeType.AUTO);
         }
 
-        // Handle expiration
         if (request.getExpirationDays() != null && request.getExpirationDays() > 0) {
             url.setExpiresAt(LocalDateTime.now().plusDays(request.getExpirationDays()));
         }
 
-        Url savedUrl = urlRepository.save(url);
-
-        return convertToResponse(savedUrl);
+        Url saved = urlRepository.save(url);
+        return convertToResponse(saved);
     }
+
 
     @Transactional
-    public String getOriginalUrl(String shortCode, HttpServletRequest request) {
-        Url url = urlRepository.findByShortCode(shortCode)
-                .orElseThrow(() -> new UrlNotFoundException("Short URL not found: " + shortCode));
+    public String getOriginalUrl(String code, HttpServletRequest request) {
+        Url url = urlRepository.findByCode(code)
+                .orElseThrow(() -> new UrlNotFoundException("Short URL not found: " + code));
 
-        // Check if URL is active
-        if (!url.getIsActive()) {
-            throw new UrlNotFoundException("This URL has been deactivated");
-        }
-
-        // Check if URL has expired
-        if (url.getExpiresAt() != null && url.getExpiresAt().isBefore(LocalDateTime.now())) {
+        if (!url.getIsActive()) throw new UrlNotFoundException("This URL has been deactivated");
+        if (url.getExpiresAt() != null && url.getExpiresAt().isBefore(LocalDateTime.now()))
             throw new UrlNotFoundException("This URL has expired");
-        }
 
-        // Track the click with analytics
         trackClick(url, request);
-
-        // Increment click count
-        url.setClickCount(url.getClickCount() + 1);
-        urlRepository.save(url);
-
+        urlRepository.incrementClickCount(url.getId());
         return url.getOriginalUrl();
     }
+
 
     private void trackClick(Url url, HttpServletRequest request) {
         UrlClick click = new UrlClick();
         click.setUrl(url);
 
-        // Get IP address
         String ipAddress = getClientIpAddress(request);
         click.setIpAddress(ipAddress);
 
-        // Get geographical data
         GeoLocation geoLocation = localGeoIpService.getLocation(ipAddress);
         click.setCountry(geoLocation.getCountry());
         click.setCity(geoLocation.getCity());
 
-        // Get user agent
         String userAgent = request.getHeader("User-Agent");
         click.setUserAgent(userAgent);
 
-        // Parse user agent for device/browser info
         click.setDeviceType(userAgentParser.getDeviceType(userAgent));
         click.setBrowser(userAgentParser.getBrowser(userAgent));
         click.setOperatingSystem(userAgentParser.getOperatingSystem(userAgent));
@@ -148,35 +140,80 @@ public class UrlService {
         return request.getRemoteAddr();
     }
 
-    public UrlResponse getUrlInfo(String shortCode) {
-        Url url = urlRepository.findByShortCode(shortCode)
+    public UrlResponse getUrlInfo(String shortCode, User user) {
+        Url url = urlRepository.findByCode(shortCode)
                 .orElseThrow(() -> new UrlNotFoundException("Short URL not found: " + shortCode));
+
+        if (!url.getUser().getId().equals(user.getId()) &&
+                !user.getRole().equals(User.Role.ADMIN)) {
+            throw new UrlNotFoundException("Short URL not found: " + shortCode);
+        }
 
         return convertToResponse(url);
     }
 
-    public List<UrlResponse> getAllUrls() {
-        return urlRepository.findAll().stream()
+    public List<UrlResponse> getAllUrls(User user) {
+        return urlRepository.findByUser(user).stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public void deleteUrl(String shortCode) {
-        Url url = urlRepository.findByShortCode(shortCode)
+    public void deleteUrl(String shortCode, User user) {
+        Url url = urlRepository.findByCode(shortCode)
                 .orElseThrow(() -> new UrlNotFoundException("Short URL not found: " + shortCode));
+
+        if (!url.getUser().getId().equals(user.getId()) &&
+                !user.getRole().equals(User.Role.ADMIN)) {
+            throw new UrlNotFoundException("Short URL not found: " + shortCode);
+        }
 
         urlRepository.delete(url);
     }
 
-    private String generateUniqueShortCode() {
-        String shortCode;
-        do {
-            shortCode = generateRandomString(SHORT_CODE_LENGTH);
-        } while (urlRepository.existsByShortCode(shortCode));
+    @Transactional
+    public UrlResponse updateUrl(String code, UrlUpdateRequest request, User user) {
+        Url url = urlRepository.findByCode(code)
+                .orElseThrow(() -> new UrlNotFoundException("Short URL not found: " + code));
 
-        return shortCode;
+        if (!url.getUser().getId().equals(user.getId()) &&
+                !user.getRole().equals(User.Role.ADMIN)) {
+            throw new UrlNotFoundException("Short URL not found: " + code);
+        }
+
+        if (request.getTitle() != null) url.setTitle(request.getTitle());
+
+        if (request.getIsActive() != null) {
+            url.setIsActive(request.getIsActive());
+        }
+
+        if (request.getCode() != null && !request.getCode().isBlank()) {
+            String newCode = request.getCode();
+            if (!newCode.equals(url.getCode()) && urlRepository.existsByCode(newCode)) {
+                throw new CustomAliasAlreadyExistsException("Code already exists: " + newCode);
+            }
+            url.setCode(newCode);
+            url.setCodeType(Url.CodeType.CUSTOM);
+        }
+
+        if (Boolean.TRUE.equals(request.getClearExpiration())) {
+            url.setExpiresAt(null);
+        } else if (request.getExpirationDays() != null && request.getExpirationDays() > 0) {
+            url.setExpiresAt(LocalDateTime.now().plusDays(request.getExpirationDays()));
+        }
+
+        return convertToResponse(urlRepository.save(url));
     }
+
+
+    private String generateUniqueCode() {
+        String code;
+        do {
+            code = generateRandomString(SHORT_CODE_LENGTH);
+        } while (urlRepository.existsByCode(code));
+        return code;
+    }
+
 
     private String generateRandomString(int length) {
         StringBuilder sb = new StringBuilder(length);
@@ -190,38 +227,44 @@ public class UrlService {
         return UrlResponse.builder()
                 .id(url.getId())
                 .originalUrl(url.getOriginalUrl())
-                .shortCode(url.getShortCode())
-                .shortUrl(baseUrl + "/s/" + url.getShortCode())
+                .code(url.getCode())
+                .shortUrl(baseUrl + "/s/" + url.getCode())
+                .title(url.getTitle())
                 .createdAt(url.getCreatedAt())
                 .expiresAt(url.getExpiresAt())
                 .clickCount(url.getClickCount())
-                .customAlias(url.getCustomAlias())
+                .isActive(url.getIsActive())
+                .codeType(url.getCodeType().name())
+                .owner(UrlResponse.UserInfo.builder()
+                        .id(url.getUser().getId())
+                        .name(url.getUser().getName())
+                        .email(url.getUser().getEmail())
+                        .build())
                 .build();
     }
 
+
     @Transactional(readOnly = true)
-    public Page<UrlWithAnalyticsResponse> getAllUrlsWithAnalytics(Pageable pageable) {
-        Page<Url> urlPage = urlRepository.findAll(pageable);
+    public Page<UrlWithAnalyticsResponse> getAllUrlsWithAnalytics(User user, Pageable pageable) {
+        Page<Url> urlPage = urlRepository.findByUser(user, pageable);
+
         return urlPage.map(url -> {
             UrlWithAnalyticsResponse.AnalyticsSummary summary = getAnalyticsSummary(url);
 
             return UrlWithAnalyticsResponse.builder()
-                    .shortCode(url.getShortCode())
+                    .code(url.getCode())
                     .originalUrl(url.getOriginalUrl())
-                    .customAlias(url.getCustomAlias())
+                    .title(url.getTitle())
                     .clickCount(url.getClickCount())
                     .createdAt(url.getCreatedAt())
                     .expiresAt(url.getExpiresAt())
                     .isExpired(url.getExpiresAt() != null && url.getExpiresAt().isBefore(LocalDateTime.now()))
+                    .isActive(url.getIsActive())
+                    .ownerName(url.getUser().getName())
+                    .ownerEmail(url.getUser().getEmail())
                     .analyticsSummary(summary)
                     .build();
-
         });
-    }
-
-    @Transactional(readOnly = true)
-    public Page<UrlWithAnalyticsResponse> getRecentUrlsWithAnalytics(Pageable pageable) {
-        return getAllUrlsWithAnalytics(pageable);
     }
 
     private UrlWithAnalyticsResponse.AnalyticsSummary getAnalyticsSummary(Url url) {
@@ -242,7 +285,6 @@ public class UrlService {
 
         LocalDateTime lastClickedAt = clicks.get(0).getClickedAt();
 
-        // Top country
         Map<String, Long> countryMap = clicks.stream()
                 .filter(click -> click.getCountry() != null)
                 .collect(Collectors.groupingBy(UrlClick::getCountry, Collectors.counting()));
@@ -254,7 +296,6 @@ public class UrlService {
         String topCountry = topCountryEntry != null ? topCountryEntry.getKey() : null;
         Long topCountryClicks = topCountryEntry != null ? topCountryEntry.getValue() : 0L;
 
-        // Top device
         Map<String, Long> deviceMap = clicks.stream()
                 .filter(click -> click.getDeviceType() != null)
                 .collect(Collectors.groupingBy(UrlClick::getDeviceType, Collectors.counting()));
@@ -266,13 +307,11 @@ public class UrlService {
         String topDeviceType = topDeviceEntry != null ? topDeviceEntry.getKey() : null;
         Long topDeviceClicks = topDeviceEntry != null ? topDeviceEntry.getValue() : 0L;
 
-        // Clicks today
         LocalDateTime startOfToday = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
         Long clicksToday = clicks.stream()
                 .filter(click -> click.getClickedAt().isAfter(startOfToday))
                 .count();
 
-        // Clicks this week
         LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
         Long clicksThisWeek = clicks.stream()
                 .filter(click -> click.getClickedAt().isAfter(oneWeekAgo))

@@ -12,14 +12,18 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UrlWithAnalyticsResponse {
-    private String shortCode;
+    private String code;
     private String originalUrl;
     private String customAlias;
     private Long clickCount;
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;
     private Boolean isExpired;
+    private Boolean isActive;
     private AnalyticsSummary analyticsSummary;
+    private String title;
+    private String ownerName;
+    private String ownerEmail;
 
     @Data
     @Builder

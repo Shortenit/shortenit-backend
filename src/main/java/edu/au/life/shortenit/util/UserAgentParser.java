@@ -13,15 +13,17 @@ public class UserAgentParser {
 
         String ua = userAgent.toLowerCase();
 
-        // Check for mobile devices
-        if (ua.contains("mobile") || ua.contains("android") || ua.contains("iphone") || ua.contains("ipod")
-        || ua.contains("blackberry") || ua.contains("window phone")) {
-            return "mobile";
+        // Check for tablets first (more specific)
+        if (ua.contains("ipad") || ua.contains("tablet") ||
+            (ua.contains("android") && !ua.contains("mobile"))) {
+            return "tablet";
         }
 
-        // Check for tablets
-        if (ua.contains("ipad") || ua.contains("tablet") || ua.contains("android") || ua.contains("mobile")) {
-            return "tablet";
+        // Check for mobile devices
+        if (ua.contains("mobile") || ua.contains("iphone") || ua.contains("ipod")
+            || ua.contains("blackberry") || ua.contains("windows phone")
+            || (ua.contains("android") && ua.contains("mobile"))) {
+            return "mobile";
         }
 
         return "desktop";
@@ -30,7 +32,7 @@ public class UserAgentParser {
     // browser type
     public String getBrowser(String userAgent) {
         if (userAgent == null || userAgent.isEmpty()) {
-            return "unknow";
+            return "unknown";
         }
 
         String ua = userAgent.toLowerCase();
