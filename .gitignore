@@ -48,3 +48,6 @@ src/main/resources/geoip/*.mmdb
 .env.*
 
 .DS_Store
+
+.DS_Store
+**/.DS_Store
