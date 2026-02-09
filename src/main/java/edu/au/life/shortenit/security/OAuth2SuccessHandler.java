@@ -1,5 +1,6 @@
 package edu.au.life.shortenit.security;
 
+import edu.au.life.shortenit.config.ProtectedAdminConfig;  // ← NEW
 import edu.au.life.shortenit.entity.RefreshToken;
 import edu.au.life.shortenit.entity.User;
 import edu.au.life.shortenit.repository.UserRepository;
@@ -28,19 +29,22 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final UserRepository userRepository;
+    private final ProtectedAdminConfig protectedAdminConfig;  // ← NEW
 
     @Value("${auth.allowed-email-domain:au.edu}")
     private String allowedEmailDomain;
 
-    @Value("${app.base-url:http://localhost:8080}")
+    @Value("${app.base-url:http://localhost:3000}")
     private String baseUrl;
 
     public OAuth2SuccessHandler(JwtService jwtService,
                                 RefreshTokenService refreshTokenService,
-                                UserRepository userRepository) {
+                                UserRepository userRepository,
+                                ProtectedAdminConfig protectedAdminConfig) {  // ← NEW PARAM
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
         this.userRepository = userRepository;
+        this.protectedAdminConfig = protectedAdminConfig;  // ← NEW
     }
 
     @Override
@@ -76,7 +80,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             log.warn("OAuth2 login rejected: email domain not allowed. Required: @{}, Got: {}", allowedEmailDomain, email);
 
             // Redirect to frontend error page
-            String errorUrl = UriComponentsBuilder.fromUriString(baseUrl + "/auth/error")  // ✅ CHANGED
+            String errorUrl = UriComponentsBuilder.fromUriString(baseUrl + "/auth/error")
                     .queryParam("error", "invalid_email_domain")
                     .queryParam("message", "Only " + allowedEmailDomain + " emails are allowed")
                     .build()
@@ -94,14 +98,23 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         // Find or create user
         User user = userRepository.findByMicrosoftId(finalMicrosoftId)
                 .orElseGet(() -> {
-                    log.info("Creating new user for email: {}", finalEmail);
+                    // ← NEW: Check if this email should be auto-promoted to ADMIN
+                    User.Role assignedRole;
+                    if (protectedAdminConfig.isProtectedAdminEmail(finalEmail)) {
+                        assignedRole = User.Role.ADMIN;
+                        log.info("Auto-promoting new user {} to ADMIN (protected admin email)", finalEmail);
+                    } else {
+                        assignedRole = User.Role.USER;
+                        log.info("Creating new user for email: {}", finalEmail);
+                    }
+
                     User newUser = new User();
                     newUser.setMicrosoftId(finalMicrosoftId);
                     newUser.setEmail(finalEmail);
                     newUser.setName(finalName);
-                    newUser.setRole(User.Role.USER);
+                    newUser.setRole(assignedRole);  // ← CHANGED: was hardcoded User.Role.USER
                     User saved = userRepository.save(newUser);
-                    log.info("User created with ID: {}", saved.getId());
+                    log.info("User created with ID: {}, role: {}", saved.getId(), saved.getRole());
                     return saved;
                 });
 

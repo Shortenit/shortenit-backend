@@ -18,6 +18,8 @@ public interface UrlRepository extends JpaRepository<Url, Long> {
 
     Optional<Url> findByCode(String code);
 
+    List<Url> findByUserOrderByCreatedAtDesc(User user);
+
     boolean existsByCode(String code);
 
     Page<Url> findAll(Pageable pageable);

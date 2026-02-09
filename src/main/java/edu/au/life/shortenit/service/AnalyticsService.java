@@ -8,6 +8,8 @@ import edu.au.life.shortenit.exception.UrlNotFoundException;
 import edu.au.life.shortenit.repository.UrlClickRepository;
 import edu.au.life.shortenit.repository.UrlRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -31,6 +33,39 @@ public class AnalyticsService {
             throw new UrlNotFoundException("Short URL not found: " + code);
         }
 
+        List<UrlClick> clicks = urlClickRepository.findByUrlOrderByClickedAtDesc(url);
+
+        return AnalyticsResponse.builder()
+                .code(url.getCode())
+                .originalUrl(url.getOriginalUrl())
+                .totalClicks(url.getClickCount())
+                .createdAt(url.getCreatedAt())
+                .clicksByDate(getClicksByDate(clicks))
+                .clicksByHour(getClicksByHour(clicks))
+                .topCountries(getTopCountries(clicks))
+                .topCities(getTopCities(clicks))
+                .deviceStats(getDeviceStats(clicks))
+                .topBrowsers(getTopBrowsers(clicks))
+                .topReferrers(getTopReferrers(clicks))
+                .recentClicks(getRecentClicks(clicks, 10))
+                .build();
+    }
+
+    public List<AnalyticsResponse> getAllAnalytics(User user) {
+        List<Url> urls = urlRepository.findByUserOrderByCreatedAtDesc(user);
+
+        return urls.stream()
+                .map(url -> buildAnalyticsResponse(url))
+                .collect(Collectors.toList());
+    }
+
+    public Page<AnalyticsResponse> getAllAnalyticsPaginated(User user, Pageable pageable) {
+        Page<Url> urlPage = urlRepository.findByUser(user, pageable);
+
+        return urlPage.map(this::buildAnalyticsResponse);
+    }
+
+    private AnalyticsResponse buildAnalyticsResponse(Url url) {
         List<UrlClick> clicks = urlClickRepository.findByUrlOrderByClickedAtDesc(url);
 
         return AnalyticsResponse.builder()

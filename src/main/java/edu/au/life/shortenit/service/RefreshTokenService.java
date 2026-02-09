@@ -31,16 +31,10 @@ public class RefreshTokenService {
         this.userRepository = userRepository;
     }
 
-    /**
-     * Find refresh token by token string
-     */
     public Optional<RefreshToken> findByToken(String token) {
         return refreshTokenRepository.findByToken(token);
     }
 
-    /**
-     * Create a new refresh token for user
-     */
     @Transactional
     public RefreshToken createRefreshToken(Long userId) {
         // Find user first
@@ -50,6 +44,8 @@ public class RefreshTokenService {
         // Calculate expiration time
         LocalDateTime expiryDate = LocalDateTime.now()
                 .plusSeconds(refreshTokenDurationMs / 1000);
+
+        refreshTokenRepository.deleteByUser(user);
 
         // Build and save refresh token
         RefreshToken refreshToken = RefreshToken.builder()
@@ -80,17 +76,6 @@ public class RefreshTokenService {
         return refreshTokenRepository.hasActiveToken(user, LocalDateTime.now());
     }
 
-    /**
-     * Delete all refresh tokens for a user (logout)
-     */
-    @Transactional
-    public void deleteByUser(User user) {
-        refreshTokenRepository.deleteByUser(user);
-    }
-
-    /**
-     * Delete all refresh tokens for a user by user ID
-     */
     @Transactional
     public void deleteByUserId(Long userId) {
         User user = userRepository.findById(userId)

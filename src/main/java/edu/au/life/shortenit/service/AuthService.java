@@ -57,6 +57,8 @@ public class AuthService {
     }
 
     private LoginResponse generateTokensForUser(User user) {
+
+        refreshTokenRepository.deleteByUser(user);
         // Generate JWT Token
         String accessToken = jwtService.generateAccessToken(
                 user.getId(),

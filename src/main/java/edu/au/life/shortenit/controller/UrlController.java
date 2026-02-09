@@ -36,30 +36,25 @@ public class UrlController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<UrlResponse>> getUserUrls() {
+    public ResponseEntity<?> getUserUrls(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+
         User currentUser = SecurityUtils.getCurrentUser();
+
+        // If pagination params provided, return paginated results
+        if (page != null && size != null) {
+            int pageIndex = Math.max(0, page - 1);  // page=1 becomes index 0
+            Pageable pageable = PageRequest.of(pageIndex, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+            Page<UrlResponse> response = urlService.getAllUrlsPaginated(currentUser, pageable);
+            return ResponseEntity.ok(response);
+        }
+
+        // No pagination params, return all URLs
         List<UrlResponse> response = urlService.getAllUrls(currentUser);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/analytics")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Page<UrlWithAnalyticsResponse>> getUserUrlsWithAnalytics(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "DESC") String direction) {
-
-        User currentUser = SecurityUtils.getCurrentUser();
-
-        Sort.Direction sortDirection = direction.equalsIgnoreCase("ASC") ?
-                Sort.Direction.ASC : Sort.Direction.DESC;
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-
-        Page<UrlWithAnalyticsResponse> response = urlService.getAllUrlsWithAnalytics(currentUser, pageable);
-
-        return ResponseEntity.ok(response);
-    }
 
     @GetMapping("/{code}")
     @PreAuthorize("isAuthenticated()")

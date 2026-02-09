@@ -10,6 +10,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import java.util.List;
+
 import java.time.LocalDateTime;
 
 @RestController
@@ -18,6 +24,25 @@ import java.time.LocalDateTime;
 public class AnalyticsController {
 
     private final AnalyticsService analyticsService;
+
+    @GetMapping
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getAllAnalytics(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+
+        User currentUser = SecurityUtils.getCurrentUser();
+
+        if (page != null && size != null) {
+            int pageIndex = Math.max(0, page - 1);
+            Pageable pageable = PageRequest.of(pageIndex, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+            Page<AnalyticsResponse> response = analyticsService.getAllAnalyticsPaginated(currentUser, pageable);
+            return ResponseEntity.ok(response);
+        }
+
+        List<AnalyticsResponse> response = analyticsService.getAllAnalytics(currentUser);
+        return ResponseEntity.ok(response);
+    }
 
     @GetMapping("/{shortCode}")
     @PreAuthorize("isAuthenticated()")

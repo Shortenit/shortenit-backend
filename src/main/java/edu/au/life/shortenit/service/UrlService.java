@@ -153,9 +153,14 @@ public class UrlService {
     }
 
     public List<UrlResponse> getAllUrls(User user) {
-        return urlRepository.findByUser(user).stream()
+        return urlRepository.findByUserOrderByCreatedAtDesc(user).stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
+    }
+
+    public Page<UrlResponse> getAllUrlsPaginated(User user, Pageable pageable) {
+        Page<Url> urlPage = urlRepository.findByUser(user, pageable);
+        return urlPage.map(this::convertToResponse);
     }
 
     @Transactional

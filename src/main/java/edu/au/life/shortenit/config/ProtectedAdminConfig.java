@@ -4,30 +4,37 @@ import edu.au.life.shortenit.entity.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Component
 public class ProtectedAdminConfig {
 
-    private final String protectedAdminEmail;
+    private final Set<String> protectedAdminEmails;
 
     public ProtectedAdminConfig(@Value("${admin.protected.email}") String protectedAdminEmail) {
-        this.protectedAdminEmail = protectedAdminEmail.toLowerCase().trim();
+        this.protectedAdminEmails = Arrays.stream(protectedAdminEmail.split(","))
+                .map(email -> email.toLowerCase().trim())
+                .filter(email -> !email.isEmpty())
+                .collect(Collectors.toSet());
     }
 
     public boolean isProtectedAdmin(User user) {
         if (user == null || user.getEmail() == null) {
             return false;
         }
-        return user.getEmail().toLowerCase().trim().equals(protectedAdminEmail);
+        return protectedAdminEmails.contains(user.getEmail().toLowerCase().trim());
     }
 
     public boolean isProtectedAdminEmail(String email) {
         if (email == null) {
             return false;
         }
-        return email.toLowerCase().trim().equals(protectedAdminEmail);
+        return protectedAdminEmails.contains(email.toLowerCase().trim());
     }
 
-    public String getProtectedAdminEmail() {
-        return protectedAdminEmail;
+    public Set<String> getProtectedAdminEmails() {
+        return protectedAdminEmails;
     }
 }
