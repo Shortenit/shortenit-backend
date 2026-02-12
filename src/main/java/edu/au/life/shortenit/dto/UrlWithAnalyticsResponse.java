@@ -22,6 +22,7 @@ public class UrlWithAnalyticsResponse {
     private Boolean isActive;
     private AnalyticsSummary analyticsSummary;
     private String title;
+    private Long ownerId;
     private String ownerName;
     private String ownerEmail;
 

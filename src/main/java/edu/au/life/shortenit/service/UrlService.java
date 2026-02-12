@@ -17,7 +17,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -265,6 +267,7 @@ public class UrlService {
                     .expiresAt(url.getExpiresAt())
                     .isExpired(url.getExpiresAt() != null && url.getExpiresAt().isBefore(LocalDateTime.now()))
                     .isActive(url.getIsActive())
+                    .ownerId(url.getUser().getId())
                     .ownerName(url.getUser().getName())
                     .ownerEmail(url.getUser().getEmail())
                     .analyticsSummary(summary)
@@ -332,5 +335,87 @@ public class UrlService {
                 .clicksToday(clicksToday)
                 .clicksThisWeek(clicksThisWeek)
                 .build();
+    }
+
+    // ==================== Admin Methods ====================
+
+    /**
+     * Get all URLs paginated (admin only - no owner filter)
+     */
+    @Transactional(readOnly = true)
+    public Page<UrlResponse> getAllUrlsPaginatedAdmin(int page, int size, String sortBy, String direction) {
+        Sort.Direction sortDirection = "ASC".equalsIgnoreCase(direction) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        Page<Url> urlPage = urlRepository.findAll(pageable);
+        return urlPage.map(this::convertToResponse);
+    }
+
+    /**
+     * Get all URLs with analytics paginated (admin only - no owner filter)
+     */
+    @Transactional(readOnly = true)
+    public Page<UrlWithAnalyticsResponse> getAllUrlsWithAnalyticsPaginatedAdmin(int page, int size, String sortBy, String direction) {
+        Sort.Direction sortDirection = "ASC".equalsIgnoreCase(direction) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        Page<Url> urlPage = urlRepository.findAll(pageable);
+
+        return urlPage.map(url -> {
+            UrlWithAnalyticsResponse.AnalyticsSummary summary = getAnalyticsSummary(url);
+
+            return UrlWithAnalyticsResponse.builder()
+                    .code(url.getCode())
+                    .originalUrl(url.getOriginalUrl())
+                    .title(url.getTitle())
+                    .clickCount(url.getClickCount())
+                    .createdAt(url.getCreatedAt())
+                    .expiresAt(url.getExpiresAt())
+                    .isExpired(url.getExpiresAt() != null && url.getExpiresAt().isBefore(LocalDateTime.now()))
+                    .isActive(url.getIsActive())
+                    .ownerId(url.getUser().getId())
+                    .ownerName(url.getUser().getName())
+                    .ownerEmail(url.getUser().getEmail())
+                    .analyticsSummary(summary)
+                    .build();
+        });
+    }
+
+    /**
+     * Get URLs by user ID paginated (admin only)
+     */
+    @Transactional(readOnly = true)
+    public Page<UrlResponse> getUrlsByUserIdPaginated(Long userId, int page, int size, String sortBy, String direction) {
+        Sort.Direction sortDirection = "ASC".equalsIgnoreCase(direction) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        Page<Url> urlPage = urlRepository.findByUserId(userId, pageable);
+        return urlPage.map(this::convertToResponse);
+    }
+
+    /**
+     * Get URLs with analytics by user ID paginated (admin only)
+     */
+    @Transactional(readOnly = true)
+    public Page<UrlWithAnalyticsResponse> getUrlsByUserIdWithAnalyticsPaginated(Long userId, int page, int size, String sortBy, String direction) {
+        Sort.Direction sortDirection = "ASC".equalsIgnoreCase(direction) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        Page<Url> urlPage = urlRepository.findByUserId(userId, pageable);
+
+        return urlPage.map(url -> {
+            UrlWithAnalyticsResponse.AnalyticsSummary summary = getAnalyticsSummary(url);
+
+            return UrlWithAnalyticsResponse.builder()
+                    .code(url.getCode())
+                    .originalUrl(url.getOriginalUrl())
+                    .title(url.getTitle())
+                    .clickCount(url.getClickCount())
+                    .createdAt(url.getCreatedAt())
+                    .expiresAt(url.getExpiresAt())
+                    .isExpired(url.getExpiresAt() != null && url.getExpiresAt().isBefore(LocalDateTime.now()))
+                    .isActive(url.getIsActive())
+                    .ownerId(url.getUser().getId())
+                    .ownerName(url.getUser().getName())
+                    .ownerEmail(url.getUser().getEmail())
+                    .analyticsSummary(summary)
+                    .build();
+        });
     }
 }
