@@ -1,6 +1,7 @@
 package edu.au.life.shortenit.service;
 
 import edu.au.life.shortenit.dto.AnalyticsResponse;
+import edu.au.life.shortenit.dto.UrlResponse;
 import edu.au.life.shortenit.entity.Url;
 import edu.au.life.shortenit.entity.UrlClick;
 import edu.au.life.shortenit.entity.User;
@@ -47,8 +48,14 @@ public class AnalyticsService {
                 .deviceStats(getDeviceStats(clicks))
                 .topBrowsers(getTopBrowsers(clicks))
                 .topReferrers(getTopReferrers(clicks))
-                .recentClicks(getRecentClicks(clicks, 10))
                 .build();
+    }
+
+    public AnalyticsResponse getAnalyticsAdmin(String code) {
+        Url url = urlRepository.findByCode(code)
+                .orElseThrow(() -> new UrlNotFoundException("Short URL not found: " + code));
+
+        return buildAdminAnalyticsResponse(url);
     }
 
     public List<AnalyticsResponse> getAllAnalytics(User user) {
@@ -80,10 +87,28 @@ public class AnalyticsService {
                 .deviceStats(getDeviceStats(clicks))
                 .topBrowsers(getTopBrowsers(clicks))
                 .topReferrers(getTopReferrers(clicks))
-                .recentClicks(getRecentClicks(clicks, 10))
                 .build();
     }
 
+    public Page<AnalyticsResponse> getAllAnalyticsPaginatedAdmin(Pageable pageable) {
+        Page<Url> urlPage = urlRepository.findAll(pageable);
+        return urlPage.map(this::buildAdminAnalyticsResponse);
+    }
+
+    public Page<AnalyticsResponse> getAnalyticsByUserIdPaginated(Long userId, Pageable pageable) {
+        Page<Url> urlPage = urlRepository.findByUserId(userId, pageable);
+        return urlPage.map(this::buildAdminAnalyticsResponse);
+    }
+
+    private AnalyticsResponse buildAdminAnalyticsResponse(Url url) {
+        AnalyticsResponse response = buildAnalyticsResponse(url);
+        response.setOwner(UrlResponse.UserInfo.builder()
+                .id(url.getUser().getId())
+                .name(url.getUser().getName())
+                .email(url.getUser().getEmail())
+                .build());
+        return response;
+    }
 
     private Map<String, Long> getClicksByDate(List<UrlClick> clicks) {
         return clicks.stream()
@@ -228,20 +253,6 @@ public class AnalyticsService {
                 .collect(Collectors.toList());
     }
 
-    private List<AnalyticsResponse.ClickEvent> getRecentClicks(List<UrlClick> clicks, int limit) {
-        return clicks.stream()
-                .limit(limit)
-                .map(click -> AnalyticsResponse.ClickEvent.builder()
-                        .timestamp(click.getClickedAt())
-                        .country(click.getCountry())
-                        .city(click.getCity())
-                        .deviceType(click.getDeviceType())
-                        .browser(click.getBrowser())
-                        .referrer(click.getReferrer())
-                        .build())
-                .collect(Collectors.toList());
-    }
-
     public AnalyticsResponse getAnalyticsByDateRange(String code, LocalDateTime start, LocalDateTime end, User user) {
         Url url = urlRepository.findByCode(code)
                 .orElseThrow(() -> new UrlNotFoundException("Short URL not found: " + code));
@@ -269,7 +280,6 @@ public class AnalyticsService {
                 .deviceStats(getDeviceStats(filteredClicks))
                 .topBrowsers(getTopBrowsers(filteredClicks))
                 .topReferrers(getTopReferrers(filteredClicks))
-                .recentClicks(getRecentClicks(filteredClicks, 10))
                 .build();
     }
 }

@@ -2,6 +2,7 @@ package edu.au.life.shortenit.repository;
 
 import edu.au.life.shortenit.entity.Url;
 import edu.au.life.shortenit.entity.UrlClick;
+import edu.au.life.shortenit.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -45,4 +46,10 @@ public interface UrlClickRepository extends JpaRepository<UrlClick, Long> {
             "FROM UrlClick c WHERE c.url.id IN :urlIds " +
             "GROUP BY c.url.id")
     List<Map<String, Object>> findAnalyticsSummaryForUrls(@Param("urlIds") List<Long> urlIds);
+
+    @Query("SELECT c.country FROM UrlClick c WHERE c.url.user = :user AND c.country IS NOT NULL GROUP BY c.country ORDER BY COUNT(c) DESC")
+    List<String> findTopCountryByUser(@Param("user") User user);
+
+    @Query("SELECT c.country FROM UrlClick c WHERE c.country IS NOT NULL GROUP BY c.country ORDER BY COUNT(c) DESC")
+    List<String> findTopCountryGlobal();
 }

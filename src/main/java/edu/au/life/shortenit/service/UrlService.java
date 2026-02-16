@@ -1,5 +1,6 @@
 package edu.au.life.shortenit.service;
 
+import edu.au.life.shortenit.dto.DashboardStatsResponse;
 import edu.au.life.shortenit.dto.GeoLocation;
 import edu.au.life.shortenit.dto.UrlResponse;
 import edu.au.life.shortenit.dto.UrlShortenRequest;
@@ -12,6 +13,7 @@ import edu.au.life.shortenit.entity.UrlClick;
 import edu.au.life.shortenit.entity.User;
 import edu.au.life.shortenit.repository.UrlClickRepository;
 import edu.au.life.shortenit.repository.UrlRepository;
+import edu.au.life.shortenit.repository.UserRepository;
 import edu.au.life.shortenit.util.UserAgentParser;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +39,7 @@ public class UrlService {
 
     private final UrlRepository urlRepository;
     private final UrlClickRepository urlClickRepository;
+    private final UserRepository userRepository;
     private final LocalGeoIpService localGeoIpService;
     private final UserAgentParser userAgentParser;
 
@@ -417,5 +420,49 @@ public class UrlService {
                     .analyticsSummary(summary)
                     .build();
         });
+    }
+
+    // ==================== Dashboard Stats ====================
+
+    @Transactional(readOnly = true)
+    public DashboardStatsResponse getDashboardStats(User user) {
+        long totalLinks = urlRepository.countByUser(user);
+        long activeLinks = urlRepository.countActiveLinksForUser(user, LocalDateTime.now());
+        long totalClicks = urlRepository.sumClickCountByUser(user);
+        double avgClicksPerLink = totalLinks > 0
+                ? Math.round(totalClicks * 10.0 / totalLinks) / 10.0
+                : 0.0;
+        List<String> topCountries = urlClickRepository.findTopCountryByUser(user);
+        String topRegion = topCountries.isEmpty() ? null : topCountries.get(0);
+
+        return DashboardStatsResponse.builder()
+                .totalLinks(totalLinks)
+                .activeLinks(activeLinks)
+                .totalClicks(totalClicks)
+                .avgClicksPerLink(avgClicksPerLink)
+                .topRegion(topRegion)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public DashboardStatsResponse getAdminDashboardStats() {
+        long totalLinks = urlRepository.count();
+        long activeLinks = urlRepository.countActiveLinks(LocalDateTime.now());
+        long totalClicks = urlRepository.sumClickCount();
+        double avgClicksPerLink = totalLinks > 0
+                ? Math.round(totalClicks * 10.0 / totalLinks) / 10.0
+                : 0.0;
+        List<String> topCountries = urlClickRepository.findTopCountryGlobal();
+        String topRegion = topCountries.isEmpty() ? null : topCountries.get(0);
+        long totalUsers = userRepository.count();
+
+        return DashboardStatsResponse.builder()
+                .totalLinks(totalLinks)
+                .activeLinks(activeLinks)
+                .totalClicks(totalClicks)
+                .avgClicksPerLink(avgClicksPerLink)
+                .topRegion(topRegion)
+                .totalUsers(totalUsers)
+                .build();
     }
 }
