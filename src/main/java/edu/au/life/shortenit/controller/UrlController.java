@@ -1,9 +1,9 @@
 package edu.au.life.shortenit.controller;
 
+import edu.au.life.shortenit.dto.DashboardStatsResponse;
 import edu.au.life.shortenit.dto.UrlResponse;
 import edu.au.life.shortenit.dto.UrlShortenRequest;
 import edu.au.life.shortenit.dto.UrlUpdateRequest;
-import edu.au.life.shortenit.dto.UrlWithAnalyticsResponse;
 import edu.au.life.shortenit.entity.User;
 import edu.au.life.shortenit.service.UrlService;
 import edu.au.life.shortenit.util.SecurityUtils;
@@ -80,5 +80,13 @@ public class UrlController {
         User currentUser = SecurityUtils.getCurrentUser();
         urlService.deleteUrl(code, currentUser);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/stats")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<DashboardStatsResponse> getDashboardStats() {
+        User currentUser = SecurityUtils.getCurrentUser();
+        DashboardStatsResponse stats = urlService.getDashboardStats(currentUser);
+        return ResponseEntity.ok(stats);
     }
 }

@@ -1,5 +1,6 @@
 package edu.au.life.shortenit.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -37,8 +38,8 @@ public class AnalyticsResponse {
     // Referrer analytics
     private List<ReferrerStats> topReferrers;
 
-    // Recent clicks
-    private List<ClickEvent> recentClicks;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private UrlResponse.UserInfo owner;
 
     @Data
     @Builder
@@ -95,16 +96,4 @@ public class AnalyticsResponse {
         private Double percentage;
     }
 
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ClickEvent {
-        private LocalDateTime timestamp;
-        private String country;
-        private String city;
-        private String deviceType;
-        private String browser;
-        private String referrer;
-    }
 }

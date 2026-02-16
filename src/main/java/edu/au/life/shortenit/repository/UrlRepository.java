@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,4 +54,16 @@ public interface UrlRepository extends JpaRepository<Url, Long> {
     @Modifying
     @Query("UPDATE Url u SET u.clickCount = u.clickCount + 1 WHERE u.id = :urlId")
     void incrementClickCount(@Param("urlId") Long urlId);
+
+    @Query("SELECT COALESCE(SUM(u.clickCount), 0) FROM Url u WHERE u.user = :user")
+    long sumClickCountByUser(@Param("user") User user);
+
+    @Query("SELECT COALESCE(SUM(u.clickCount), 0) FROM Url u")
+    long sumClickCount();
+
+    @Query("SELECT COUNT(u) FROM Url u WHERE u.user = :user AND u.isActive = true AND (u.expiresAt IS NULL OR u.expiresAt > :now)")
+    long countActiveLinksForUser(@Param("user") User user, @Param("now") LocalDateTime now);
+
+    @Query("SELECT COUNT(u) FROM Url u WHERE u.isActive = true AND (u.expiresAt IS NULL OR u.expiresAt > :now)")
+    long countActiveLinks(@Param("now") LocalDateTime now);
 }
