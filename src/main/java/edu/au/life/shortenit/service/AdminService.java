@@ -6,6 +6,7 @@ import edu.au.life.shortenit.entity.User;
 import edu.au.life.shortenit.entity.User.Role;
 import edu.au.life.shortenit.exception.ForbiddenException;
 import edu.au.life.shortenit.exception.ResourceNotFoundException;
+import edu.au.life.shortenit.repository.RefreshTokenRepository;
 import edu.au.life.shortenit.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,10 +18,12 @@ import java.util.stream.Collectors;
 public class AdminService {
 
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final ProtectedAdminConfig protectedAdminConfig;
 
-    public AdminService(UserRepository userRepository, ProtectedAdminConfig protectedAdminConfig) {
+    public AdminService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, ProtectedAdminConfig protectedAdminConfig) {
         this.userRepository = userRepository;
+        this.refreshTokenRepository = refreshTokenRepository;
         this.protectedAdminConfig = protectedAdminConfig;
     }
 
@@ -29,7 +32,6 @@ public class AdminService {
     }
 
     public boolean canDelete(User actor, User target) {
-        // No one can delete the protected admin
         if (isProtectedAdmin(target)) {
             return false;
         }
@@ -96,6 +98,7 @@ public class AdminService {
             throw new ForbiddenException("Admins cannot delete other admins");
         }
 
+        refreshTokenRepository.deleteByUser(target);
         userRepository.delete(target);
     }
 

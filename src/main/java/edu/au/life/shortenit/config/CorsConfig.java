@@ -9,11 +9,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 
-/**
- * CorsConfig - NEW
- * Status: NEW
- * CORS configuration for frontend
- */
 @Configuration
 public class CorsConfig {
 
